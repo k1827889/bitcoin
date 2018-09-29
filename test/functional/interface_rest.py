@@ -198,7 +198,7 @@ class RESTTest (BitcoinTestFramework):
         self.nodes[0].generate(1)  # generate block to not affect upcoming tests
         self.sync_all()
 
-        self.log.info("Test the /block and /headers URIs")
+        self.log.info("Test the /block, /blockhashbyheight and /headers URIs")
         bb_hash = self.nodes[0].getbestblockhash()
 
         # Check binary format
@@ -227,6 +227,13 @@ class RESTTest (BitcoinTestFramework):
         # Check json format
         block_json_obj = self.test_rest_request("/block/{}".format(bb_hash))
         assert_equal(block_json_obj['hash'], bb_hash)
+        assert_equal(self.test_rest_request("/blockhashbyheight/{}".format(block_json_obj['height']))['blockhash'], bb_hash)
+
+        # Check invalid blockhashbyheight requests
+        self.test_rest_request("/blockhashbyheight/abc", ret_type=RetType.OBJ, status=400)
+        self.test_rest_request("/blockhashbyheight/1000000", ret_type=RetType.OBJ, status=404)
+        self.test_rest_request("/blockhashbyheight/-1", ret_type=RetType.OBJ, status=400)
+        self.test_rest_request("/blockhashbyheight/", ret_type=RetType.OBJ, status=400)
 
         # Compare with json block header
         json_obj = self.test_rest_request("/headers/1/{}".format(bb_hash))
